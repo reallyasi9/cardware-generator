@@ -12,11 +12,11 @@ type Card rune
 
 // Deck represents a deck of playing cards.
 type Deck struct {
+	RandomObject
 	cards []Card
 	draws int
 	tr    func(rune) (string, error)
 	pg    *combin.PermutationGenerator
-	cg    *combin.CombinationGenerator
 }
 
 const AceOfSpades = '🂡'
@@ -48,8 +48,8 @@ func (d *Deck) MaxDraws() int {
 	return len(d.cards)
 }
 
-// NumPermutations implements RandomObject interface.
-func (d *Deck) NumPermutations(k int) *big.Int {
+// CountDistinctOutcomes implements RandomObject interface.
+func (d *Deck) CountDistinctOutcomes(k int) *big.Int {
 	md := d.MaxDraws()
 	if k > md {
 		panic("k > MaxDraws")
@@ -64,8 +64,8 @@ func (d *Deck) NumPermutations(k int) *big.Int {
 	return n.MulRange(int64(md-k+1), int64(md))
 }
 
-// NumCombinations implements RandomObject interface.
-func (d *Deck) NumCombinations(k int) *big.Int {
+// NextOutcome implements RandomObject interface.
+func (d *Deck) NextOutcome(k int) []rune {
 	md := d.MaxDraws()
 	if k > md {
 		panic("k > MaxDraws")
@@ -74,30 +74,7 @@ func (d *Deck) NumCombinations(k int) *big.Int {
 		panic("k < 0")
 	}
 	if k == 0 {
-		return big.NewInt(1)
-	}
-	// (n,k) = (n,n-k)
-	if k > md/2 {
-		k = md - k
-	}
-	n := big.NewInt(1)
-	n.MulRange(int64(md-k+1), int64(md))
-	denom := big.NewInt(1)
-	denom.MulRange(int64(1), int64(k))
-	return n.Quo(n, denom)
-}
-
-// NextPermutation implements RandomObject interface.
-func (d *Deck) NextPermutation(k int) []rune {
-	md := d.MaxDraws()
-	if k > md {
-		panic("k > MaxDraws")
-	}
-	if k < 0 {
-		panic("k < 0")
-	}
-	if k == 0 {
-		return []rune{}
+		return nil
 	}
 	if k != d.draws || d.pg == nil {
 		d.draws = k
@@ -111,35 +88,6 @@ func (d *Deck) NextPermutation(k int) []rune {
 	d.pg.Permutation(p)
 	out := make([]rune, k)
 	for i, x := range p {
-		out[i] = rune(d.cards[x])
-	}
-	return out
-}
-
-// NextCombination implements RandomObject interface.
-func (d *Deck) NextCombination(k int) []rune {
-	md := d.MaxDraws()
-	if k > md {
-		panic("k > MaxDraws")
-	}
-	if k < 0 {
-		panic("k < 0")
-	}
-	if k == 0 {
-		return []rune{}
-	}
-	if k != d.draws || d.cg == nil {
-		d.draws = k
-		d.cg = combin.NewCombinationGenerator(md, k)
-	}
-	if !d.cg.Next() {
-		d.cg = nil
-		return nil
-	}
-	c := make([]int, k)
-	d.cg.Combination(c)
-	out := make([]rune, k)
-	for i, x := range c {
 		out[i] = rune(d.cards[x])
 	}
 	return out
