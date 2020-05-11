@@ -73,6 +73,40 @@ func (db *diceBag) Set(s string) error {
 	return nil
 }
 
+type elements [][]rune
+
+// Len implements sort.Interface
+func (e elements) Len() int {
+	return len(e)
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// Less implements sort.Interface
+func (e elements) Less(i, j int) bool {
+	for k := 0; k < min(len(e[i]), len(e[j])); k++ {
+		if e[i][k] < e[j][k] {
+			return true
+		} else if e[i][k] > e[j][k] {
+			return false
+		}
+	}
+	if len(e[j]) >= len(e[i]) {
+		return false
+	}
+	return true
+}
+
+// Swap implements sort.Interface
+func (e elements) Swap(i, j int) {
+	e[i], e[j] = e[j], e[i]
+}
+
 var flagWordList string
 var flagMinWordLength int
 var flagNoSymbols bool
@@ -155,20 +189,26 @@ func main() {
 	sort.Strings(subset)
 
 	// generate permutations
-	list := make([]string, nSubset)
+	els := make(elements, nSubset)
 	for i, draw := int64(0), device.NextOutcome(kdraws); i < nSubset && draw != nil; i, draw = i+1, device.NextOutcome(kdraws) {
-		names := make([]string, len(draw))
-		for j, r := range draw {
+		els[i] = draw
+	}
+
+	// sort by card order
+	sort.Sort(els)
+
+	// convert to human-readable strings
+	list := make([]string, nSubset)
+	for i, e := range els {
+		names := make([]string, len(e))
+		for j, r := range e {
 			names[j], err = device.Translate(r)
 			if err != nil {
-				panic(err)
+				log.Fatalf("error translating rune : %v", err)
 			}
 		}
 		list[i] = strings.Join(names, "+")
 	}
-
-	// sort by card order
-	sort.Strings(list)
 
 	// print card-word listing
 	for i, draw := range list {
