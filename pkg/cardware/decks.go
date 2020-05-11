@@ -19,11 +19,19 @@ type Deck struct {
 	pg    *combin.PermutationGenerator
 }
 
+// AceOfSpades is the lowest-valued card in the deck.
 const AceOfSpades = '🂡'
 
+// FrenchColors are the colors present in a standard French deck of cards (black and red).
 var FrenchColors = []rune{'B', 'R'}
+
+// FrenchSuits are the four suits present in a standard French deck of cards.
 var FrenchSuits = []rune{'♠', '♡', '♢', '♣'}
+
+// FrenchValues are the thirteen values of cards for each suit in a standard French deck of cards.
 var FrenchValues = []rune{'A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K'}
+
+// FrenchCards is a deck of 52 standard French cards.
 var FrenchCards = make([]rune, 52)
 
 func init() {
