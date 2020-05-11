@@ -42,12 +42,10 @@ func (c *Combined) CountDistinctOutcomes(k int) *big.Int {
 // NextOutcome implements RandomObject interface.
 func (c *Combined) NextOutcome(k int) []rune {
 	kdice, kcards := c.splitDraws(k)
-	if c.lastDice == nil {
-		c.lastDice = c.DiceBag.NextOutcome(kdice)
-	}
+	c.lastDice = c.DiceBag.NextOutcome(kdice)
 	cards := c.Deck.NextOutcome(kcards)
-	if cards == nil {
-		c.lastDice = c.DiceBag.NextOutcome(kdice)
+	if kcards > 0 && cards == nil {
+		// restart from the first card by drawing again
 		cards = c.Deck.NextOutcome(kcards)
 	}
 	if c.lastDice == nil {
