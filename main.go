@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -82,9 +83,6 @@ var flagCards int
 var flagDiceBag diceBag
 
 func init() {
-	//flag.StringVar(&flagWordList, "wordlist", "", "path to file containing list of valid words")
-	flag.StringVar(&flagWordList, "w", "", "path to file containing list of valid words")
-	//flag.IntVar(&flagMinWordLength, "minlength", 4, "minimum number of letters in words")
 	flag.IntVar(&flagMinWordLength, "m", 4, "minimum number of letters in words")
 	flag.BoolVar(&flagNoSymbols, "no-symbols", false, "do not create a symbol table")
 	flag.BoolVar(&flagQuotes, "quotes", false, "allow quote characters in symbol table")
@@ -92,14 +90,26 @@ func init() {
 	flag.BoolVar(&flagNoCapitals, "no-capitals", false, "do not create a capital letter table")
 	flag.IntVar(&flagCards, "c", 0, "draw this many playing cards to augment randomness")
 	flag.Var(&flagDiceBag, "d", "define bag of dice (using [N]dF+[N]dF+... notation)")
+
+	flag.Usage = func() {
+		name := filepath.Base(os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s [options] wordlist\nOptions are any of the following:\n", name)
+		flag.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "Options must preceed positional arguments.\n")
+	}
 }
 
 func main() {
 	flag.Parse()
+	wordListFile := flag.Arg(0)
+	if wordListFile == "" {
+		flag.Usage()
+		log.Fatal(fmt.Errorf("word list file not specified"))
+	}
 
-	file, err := os.Open(flagWordList)
+	file, err := os.Open(wordListFile)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Errorf("word list file '%s' : %v", wordListFile, err))
 	}
 	defer file.Close()
 
@@ -141,6 +151,7 @@ func main() {
 		wordList[i], wordList[j] = wordList[j], wordList[i]
 	})
 	subset := wordList[:nSubset]
+	// sot back into alphabetical order for display
 	sort.Strings(subset)
 
 	// generate permutations
