@@ -150,9 +150,9 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	wordList := make([]string, 0)
 	for scanner.Scan() {
-		t := scanner.Text()
-		if len(t) >= flagMinWordLength {
-			wordList = append(wordList, scanner.Text())
+		t := strings.TrimSpace(scanner.Text())
+		if len(t) > 0 && len(t) >= flagMinWordLength {
+			wordList = append(wordList, t)
 		}
 	}
 
