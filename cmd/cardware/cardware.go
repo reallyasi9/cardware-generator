@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
 
 	"github.com/reallyasi9/cardware-generator/pkg/cardware"
 	"gonum.org/v1/gonum/stat/combin"
@@ -63,6 +64,8 @@ func init() {
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	flag.Parse()
 	wordListFile := flag.Arg(0)
 	if wordListFile == "" {
