@@ -14,12 +14,8 @@ import (
 	"gonum.org/v1/gonum/stat/combin"
 )
 
-var flagWordList string
 var flagMinWordLength int
-var flagNoSymbols bool
-var flagQuotes bool
-var flagSpace bool
-var flagNoCapitals bool
+var flagDraws int
 
 type cardWord struct {
 	cards []rune
@@ -50,10 +46,7 @@ func (c cardWordList) Swap(i, j int) {
 
 func init() {
 	flag.IntVar(&flagMinWordLength, "m", 4, "minimum number of letters in words")
-	flag.BoolVar(&flagNoSymbols, "no-symbols", false, "do not create a symbol table")
-	flag.BoolVar(&flagQuotes, "quotes", false, "allow quote characters in symbol table")
-	flag.BoolVar(&flagSpace, "space", false, "allow space character in symbol table")
-	flag.BoolVar(&flagNoCapitals, "no-capitals", false, "do not create a capital letter table")
+	flag.IntVar(&flagDraws, "n", 0, "number of card draws (limits the number of shuffled words; defaults to as many as necessary to select all words in wordlist)")
 
 	flag.Usage = func() {
 		name := filepath.Base(os.Args[0])
@@ -84,9 +77,16 @@ func main() {
 
 	nCards := countCardsNeeded(len(wordList))
 	log.Printf("needs %d cards", nCards)
-	nCards--
+	if nCards > flagDraws && flagDraws > 0 {
+		log.Printf("limiting to %d cards due to user options", flagDraws)
+		nCards = flagDraws
+	}
 	deckSize := len(cardware.FrenchCards)
 	nWords := combin.NumPermutations(deckSize, nCards)
+	if nWords > len(wordList) {
+		log.Printf("WARNING: due to wordlist size, only %d of %d permutations will be used", len(wordList), nWords)
+		nWords = len(wordList)
+	}
 	log.Printf("limiting to %d words with %d cards", nWords, nCards)
 
 	rand.Shuffle(len(wordList), func(i, j int) {
