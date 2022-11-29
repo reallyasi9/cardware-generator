@@ -104,15 +104,9 @@ func main() {
 		wordList[i], wordList[j] = wordList[j], wordList[i]
 	})
 
-	pg := combin.NewPermutationGenerator(deckSize, nCards)
-	perm := make([]int, nCards)
 	cwl := make(cardWordList, nWords)
-	for iWord := 0; pg.Next() && iWord < nWords; iWord++ {
-		perm = pg.Permutation(perm)
-		cards := make([]rune, nCards)
-		for i, c := range perm {
-			cards[i] = rune(deck.Card(c))
-		}
+	for iWord := 0; iWord < nWords; iWord++ {
+		cards := deck.NextOutcome(nCards)
 		cwl[iWord] = cardWord{cards: cards, word: wordList[iWord]}
 	}
 

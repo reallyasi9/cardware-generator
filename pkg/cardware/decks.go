@@ -56,24 +56,26 @@ var TarotDeMarseilleTrumps = []string{"0", "I", "II", "III", "IV", "V", "VI", "V
 var TarotDeMarseilleCards = make([]rune, 78)
 
 func init() {
-	card := 0
-	for i := AceOfSpades; i < KingOfClubs; i++ {
-		rank := i % 16
+	fcard := 0
+	tcard := 0
+	for i := AceOfSpades; i <= KingOfClubs; i++ {
+		rank := (i - AceOfSpades) % 16
 		// skip empty runes and jokers
 		if rank >= 14 {
 			continue
 		}
-		TarotDeMarseilleCards[card] = i
+		TarotDeMarseilleCards[tcard] = i
+		tcard++
 		// skip knights
 		if rank == 11 {
 			continue
 		}
-		FrenchCards[card] = i
-		card++
+		FrenchCards[fcard] = i
+		fcard++
 	}
-	for i := TheFool; i < TheWorld; i++ {
-		TarotDeMarseilleCards[card] = i
-		card++
+	for i := TheFool; i <= TheWorld; i++ {
+		TarotDeMarseilleCards[tcard] = i
+		tcard++
 	}
 }
 
