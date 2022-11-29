@@ -16,6 +16,7 @@ import (
 
 var flagMinWordLength int
 var flagDraws int
+var flagDeckType string
 
 type cardWord struct {
 	cards []rune
@@ -47,12 +48,13 @@ func (c cardWordList) Swap(i, j int) {
 func init() {
 	flag.IntVar(&flagMinWordLength, "m", 4, "minimum number of letters in words")
 	flag.IntVar(&flagDraws, "n", 0, "number of card draws (limits the number of shuffled words; defaults to as many as necessary to select all words in wordlist)")
+	flag.StringVar(&flagDeckType, "t", "french", "type of deck (can be \"french\" for a standard 4-suited, 13-ranked deck or \"tarot\" for a 4-suited, 14-ranked, 22-trump deck)")
 
 	flag.Usage = func() {
 		name := filepath.Base(os.Args[0])
 		fmt.Fprintf(os.Stderr, "Usage: %s [options] wordlist\nOptions are any of the following:\n", name)
 		flag.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "Options must preceed positional arguments.\n")
+		fmt.Fprintf(os.Stderr, "Options must precede positional arguments.\n")
 	}
 }
 
@@ -65,6 +67,15 @@ func main() {
 		flag.Usage()
 		log.Fatal(fmt.Errorf("word list file not specified"))
 	}
+	var deck *cardware.Deck
+	if flagDeckType == "french" {
+		deck = cardware.NewStandardFrenchDeck()
+	} else if flagDeckType == "tarot" {
+		deck = cardware.NewTarotDeMarseilleDeck()
+	} else {
+		flag.Usage()
+		log.Fatal(fmt.Errorf("deck type \"%s\" not valid", flagDeckType))
+	}
 
 	file, err := os.Open(wordListFile)
 	if err != nil {
@@ -75,13 +86,13 @@ func main() {
 	wordList := cardware.NewWordList(file, flagMinWordLength)
 	log.Printf("read %d words", len(wordList))
 
-	nCards := countCardsNeeded(len(wordList))
+	nCards := countCardsNeeded(len(wordList), deck)
 	log.Printf("needs %d cards", nCards)
 	if nCards > flagDraws && flagDraws > 0 {
 		log.Printf("limiting to %d cards due to user options", flagDraws)
 		nCards = flagDraws
 	}
-	deckSize := len(cardware.FrenchCards)
+	deckSize := deck.MaxDraws()
 	nWords := combin.NumPermutations(deckSize, nCards)
 	if nWords > len(wordList) {
 		log.Printf("WARNING: due to wordlist size, only %d of %d permutations will be used", len(wordList), nWords)
@@ -100,7 +111,7 @@ func main() {
 		perm = pg.Permutation(perm)
 		cards := make([]rune, nCards)
 		for i, c := range perm {
-			cards[i] = cardware.FrenchCards[c]
+			cards[i] = rune(deck.Card(c))
 		}
 		cwl[iWord] = cardWord{cards: cards, word: wordList[iWord]}
 	}
@@ -108,7 +119,7 @@ func main() {
 	sort.Sort(cwl)
 	for _, cw := range cwl {
 		for _, c := range cw.cards {
-			cardStr, err := cardware.TranslateFrench(c)
+			cardStr, err := deck.Translate(c)
 			if err != nil {
 				log.Fatal(fmt.Errorf("card '%c' : %v", c, err))
 			}
@@ -118,12 +129,12 @@ func main() {
 	}
 }
 
-func countCardsNeeded(nCombinations int) int {
+func countCardsNeeded(nCombinations int, deck *cardware.Deck) int {
 	cards := 0
 	combs := 0
-	for combs < nCombinations && cards <= len(cardware.FrenchCards) {
+	for combs < nCombinations && cards <= deck.MaxDraws() {
 		cards++
-		combs = combin.NumPermutations(len(cardware.FrenchCards), cards)
+		combs = combin.NumPermutations(deck.MaxDraws(), cards)
 	}
 	return cards
 }
